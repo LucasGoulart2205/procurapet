@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # procurapet
 
 Projeto de um aplicativo para procurar pets
@@ -14,3 +15,6 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# procurapet
+>>>>>>> 5ce61200218824a3eab67102427c051ff35a83e9
