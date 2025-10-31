@@ -193,7 +193,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
               DropdownButtonFormField<String>(
                 decoration: _inputDecoration('Porte'),
                 value: _porteSelecionado,
-                items: ['Pequeno', 'Médio', 'Grande']
+                items: ['Mini','Pequeno', 'Médio', 'Grande', 'Gigante']
                     .map((porte) =>
                     DropdownMenuItem(value: porte, child: Text(porte)))
                     .toList(),
