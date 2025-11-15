@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1003398816157",
+    "project_id": "procurapet-55e17",
+    "storage_bucket": "procurapet-55e17.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1003398816157:android:715a183d26fe7698728f74",
+        "android_client_info": {
+          "package_name": "com.example.procurapet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6uOkVgLRsrDyY_6nJgTN2w3yhp4iIHc4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

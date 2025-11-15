@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 
 class PetDetailsScreen extends StatelessWidget {
@@ -8,14 +7,15 @@ class PetDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? fotoPath = petInfo['foto'];
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         title: Text(
           petInfo['nome'] ?? 'Detalhes do Pet',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
         backgroundColor: Colors.white,
         centerTitle: true,
@@ -25,27 +25,6 @@ class PetDetailsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Hero(
-            tag: petInfo['nome'] ?? '',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: fotoPath != null && fotoPath.isNotEmpty
-                  ? Image.file(
-                File(fotoPath),
-                height: 250,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              )
-                  : Container(
-                height: 250,
-                color: Colors.grey[300],
-                child: const Icon(Icons.pets, size: 100, color: Colors.white70),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -77,7 +56,8 @@ class PetDetailsScreen extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          if (petInfo['descricao'] != null && petInfo['descricao'].toString().isNotEmpty)
+          if (petInfo['descricao'] != null &&
+              petInfo['descricao'].toString().isNotEmpty)
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -98,7 +78,11 @@ class PetDetailsScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     petInfo['descricao'] ?? '—',
-                    style: const TextStyle(fontSize: 15, height: 1.4, color: Colors.black87),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.4,
+                      color: Colors.black87,
+                    ),
                   ),
                 ],
               ),
