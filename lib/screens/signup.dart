@@ -64,16 +64,16 @@ class _SignupScreenState extends State<SignupScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Logo
+
                 Image.asset(
-                  'assets/procurapet.png', // substitua pelo seu logo
+                  'assets/procurapet.png',
                   width: 120,
                   height: 120,
                 ),
                 const SizedBox(height: 24),
                 const SizedBox(height: 40),
 
-                // Campos de texto
+
                 _buildTextField(nameController, "Nome", Icons.person),
                 const SizedBox(height: 16),
                 _buildTextField(emailController, "Email", Icons.email),
@@ -84,7 +84,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 const SizedBox(height: 30),
 
-                // Botão de registro
                 isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
@@ -106,7 +105,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 const SizedBox(height: 20),
 
-                // Link para login
+
                 TextButton(
                   onPressed: () {
                     Navigator.pushReplacement(

@@ -46,9 +46,9 @@ class AuthWrapper extends StatelessWidget {
         }
 
         if (snapshot.hasData && snapshot.data != null) {
-          return const MapScreen(); // Usuário logado
+          return const MapScreen();
         } else {
-          return const LoginScreen(); // Usuário não logado
+          return const LoginScreen();
         }
       },
     );

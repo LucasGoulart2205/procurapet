@@ -54,9 +54,8 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Logo
                 Image.asset(
-                  'assets/procurapet.png', // troque pelo seu logo
+                  'assets/procurapet.png',
                   width: 120,
                   height: 120,
                 ),
@@ -64,14 +63,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 40),
 
-                // Campos de texto
                 _buildTextField(emailController, "Email", Icons.email),
                 const SizedBox(height: 16),
                 _buildTextField(passwordController, "Senha", Icons.lock, obscure: true),
 
                 const SizedBox(height: 30),
 
-                // Botão de login
+
                 isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
@@ -93,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
-                // Link para cadastro
+
                 TextButton(
                   onPressed: () {
                     Navigator.pushReplacement(

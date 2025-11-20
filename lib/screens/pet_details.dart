@@ -74,7 +74,7 @@ class PetDetailsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _titulo('Observaçõesa'),
+                  _titulo('Observações'),
                   const SizedBox(height: 8),
                   Text(
                     petInfo['descricao'] ?? '—',

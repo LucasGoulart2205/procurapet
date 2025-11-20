@@ -28,7 +28,6 @@ class _MapScreenState extends State<MapScreen> {
     _carregarPetsDoFirestore();
   }
 
-  /// 🔹 Obtém a localização atual do usuário
   Future<void> _obterLocalizacaoAtual() async {
     bool servicosAtivos = await Geolocator.isLocationServiceEnabled();
     if (!servicosAtivos) {
@@ -46,12 +45,15 @@ class _MapScreenState extends State<MapScreen> {
 
     if (permissao == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Permissão de localização negada permanentemente.')),
+        const SnackBar(
+            content: Text('Permissão de localização negada permanentemente.')),
       );
       return;
     }
 
-    Position posicao = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    Position posicao = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
 
     setState(() {
       _localizacaoAtual = LatLng(posicao.latitude, posicao.longitude);
@@ -62,7 +64,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  /// 🔹 Carrega pets salvos no Firebase Firestore
   Future<void> _carregarPetsDoFirestore() async {
     try {
       final snapshot = await FirebaseFirestore.instance.collection('pets').get();
@@ -82,13 +83,15 @@ class _MapScreenState extends State<MapScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => PetDetailsScreen(petInfo: data)),
+                  MaterialPageRoute(
+                      builder: (_) => PetDetailsScreen(petInfo: data)),
                 );
               },
             ),
           ),
         );
       }
+
       setState(() {
         _marcadores.addAll(novosMarcadores);
       });
@@ -96,7 +99,6 @@ class _MapScreenState extends State<MapScreen> {
       debugPrint("Erro ao carregar pets do Firestore: $e");
     }
   }
-
 
   void _aoCriarMapa(GoogleMapController controller) {
     mapaController = controller;
@@ -107,7 +109,6 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /// 🔹 Ao clicar no mapa: mostra diálogo para adicionar pet
   void _aoClicarNoMapa(LatLng posicao) async {
     final adicionar = await showDialog<bool>(
       context: context,
@@ -120,52 +121,32 @@ class _MapScreenState extends State<MapScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.pets_rounded, color: Colors.black87, size: 48),
+              const Icon(Icons.pets_rounded, size: 48),
               const SizedBox(height: 16),
               const Text(
                 'Adicionar pet perdido?',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.black87),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               const Text(
                 'Deseja adicionar um pet perdido neste local?',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Colors.black54, height: 1.4),
               ),
               const SizedBox(height: 26),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      side: const BorderSide(color: Colors.black26),
-                    ),
                     onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancelar', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+                    child: const Text('Cancelar'),
                   ),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 3,
-                    ),
                     onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Adicionar', style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: const Text('Adicionar'),
                   ),
                 ],
               ),
@@ -176,38 +157,46 @@ class _MapScreenState extends State<MapScreen> {
     );
 
     if (adicionar == true) {
-      final petInfo = await Navigator.push(
+
+      final resultado = await Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => AddPetScreen(local: posicao)),
+        MaterialPageRoute(builder: (_) => AddPetScreen(local: posicao)),
       );
 
-      if (petInfo != null) {
-        final id = DateTime.now().toString();
-        _petsInfo[id] = petInfo;
 
-        setState(() {
-          _marcadores.add(
-            Marker(
-              markerId: MarkerId(id),
-              position: posicao,
-              infoWindow: InfoWindow(
-                title: petInfo['nome'],
-                snippet: "${petInfo['especie']} - ${petInfo['porte']}",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => PetDetailsScreen(petInfo: petInfo)),
-                  );
-                },
-              ),
+      if (resultado == null) return;
+
+
+      final String id = resultado["id"];
+      final Map<String, dynamic> data = resultado["data"];
+
+      _petsInfo[id] = data;
+
+
+      setState(() {
+        _marcadores.add(
+          Marker(
+            markerId: MarkerId(id),
+            position: LatLng(data['latitude'], data['longitude']),
+            infoWindow: InfoWindow(
+              title: data['nome'],
+              snippet: "${data['especie']} - ${data['porte']}",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PetDetailsScreen(petInfo: data),
+                  ),
+                );
+              },
             ),
-          );
-        });
-      }
+          ),
+        );
+      });
     }
   }
 
-  /// 🔹 Constrói o mapa
+
   Widget _buildMapScreen() {
     return _localizacaoAtual == null
         ? const Center(child: CircularProgressIndicator())
@@ -226,28 +215,20 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _getCurrentScreen() {
-    if (_selectedIndex == 0) return _buildMapScreen();
-    return const ProfileScreen();
+    switch (_selectedIndex) {
+      case 0:
+        return _buildMapScreen();
+      case 1:
+        return const ChatIaScreen();
+      case 2:
+        return const ProfileScreen();
+      default:
+        return _buildMapScreen();
+    }
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    if (index == 1) {
-      // 🔹 Redireciona para a tela Chat IA
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ChatIaScreen()),
-      );
-    } else if (index == 2) {
-      // 🔹 Redireciona para o perfil
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ProfileScreen()),
-      );
-    }
+    setState(() => _selectedIndex = index);
   }
 
   @override
@@ -257,7 +238,6 @@ class _MapScreenState extends State<MapScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        backgroundColor: Colors.white,
         selectedItemColor: Colors.teal,
         unselectedItemColor: Colors.grey,
         items: const [

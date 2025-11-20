@@ -51,7 +51,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception("Usuário não autenticado.");
 
-      await FirebaseFirestore.instance.collection('pets').add({
+      final doc = await FirebaseFirestore.instance.collection('pets').add({
         'nome': _nomeController.text,
         'especie': _especieSelecionada,
         'raca': _racaController.text,
@@ -67,7 +67,23 @@ class _AddPetScreenState extends State<AddPetScreen> {
         'criadoEm': FieldValue.serverTimestamp(),
       });
 
-      Navigator.pop(context, true);
+      Navigator.pop(context, {
+        "id": doc.id,
+        "data": {
+          'nome': _nomeController.text,
+          'especie': _especieSelecionada,
+          'raca': _racaController.text,
+          'idade': _idadeController.text,
+          'peso': _pesoController.text,
+          'porte': _porteSelecionado,
+          'cor': _corController.text,
+          'sexo': _sexoSelecionado,
+          'descricao': _descricaoController.text,
+          'latitude': widget.local.latitude,
+          'longitude': widget.local.longitude,
+        }
+      });
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao salvar pet: $e')),
@@ -104,7 +120,11 @@ class _AddPetScreenState extends State<AddPetScreen> {
                 _campoTexto(_nomeController, 'Nome do Pet'),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Espécie'),
+                  decoration: InputDecoration(
+                    labelText: 'Espécie',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
                   value: _especieSelecionada,
                   items: _especies
                       .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -119,7 +139,11 @@ class _AddPetScreenState extends State<AddPetScreen> {
                 _campoTexto(_pesoController, 'Peso'),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Porte'),
+                  decoration: InputDecoration(
+                    labelText: 'Porte',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
                   value: _porteSelecionado,
                   items: _portes
                       .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -127,10 +151,15 @@ class _AddPetScreenState extends State<AddPetScreen> {
                   onChanged: (v) => setState(() => _porteSelecionado = v),
                 ),
                 const SizedBox(height: 14),
+
                 _campoTexto(_corController, 'Cor'),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Sexo'),
+                  decoration: InputDecoration(
+                    labelText: 'Sexo',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
                   value: _sexoSelecionado,
                   items: _sexos
                       .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -157,6 +186,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
               ],
             ),
           ),
+
           if (_carregando)
             Container(
               color: Colors.black38,
