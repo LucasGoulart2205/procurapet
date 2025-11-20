@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PetDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> petInfo;
+  final String petId;
+  final Function(String)? onDeleted; // ✅ callback para notificar exclusão
 
-  const PetDetailsScreen({super.key, required this.petInfo});
+  const PetDetailsScreen({
+    super.key,
+    required this.petInfo,
+    required this.petId,
+    this.onDeleted,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +29,55 @@ class PetDetailsScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 2,
         iconTheme: const IconThemeData(color: Colors.black87),
+
+        /// 🔥 BOTÃO DE DELETAR PET
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () async {
+              final confirmar = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("Excluir Pet"),
+                  content: const Text(
+                    "Tem certeza que deseja excluir este pet? Esta ação não pode ser desfeita.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text("Cancelar"),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text(
+                        "Excluir",
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirmar == true) {
+                await FirebaseFirestore.instance
+                    .collection('pets')
+                    .doc(petId)
+                    .delete();
+
+                // ✅ chama o callback para remover o marcador do mapa
+                if (onDeleted != null) onDeleted!(petId);
+
+                Navigator.pop(context); // fecha detalhes e volta ao mapa
+              }
+            },
+          ),
+        ],
       ),
+
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          /// 🔹 CARD DE INFORMAÇÕES
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -56,6 +109,7 @@ class PetDetailsScreen extends StatelessWidget {
 
           const SizedBox(height: 20),
 
+          /// 🔹 CARD DE DESCRIÇÃO/OBSERVAÇÕES
           if (petInfo['descricao'] != null &&
               petInfo['descricao'].toString().isNotEmpty)
             Container(
@@ -92,6 +146,7 @@ class PetDetailsScreen extends StatelessWidget {
     );
   }
 
+  /// 🔹 Título das seções
   Widget _titulo(String texto) {
     return Text(
       texto,
@@ -103,6 +158,7 @@ class PetDetailsScreen extends StatelessWidget {
     );
   }
 
+  /// 🔹 Linha de informação
   Widget _info(String titulo, String? valor) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),

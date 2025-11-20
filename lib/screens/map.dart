@@ -84,12 +84,19 @@ class _MapScreenState extends State<MapScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => PetDetailsScreen(petInfo: data)),
+                    builder: (_) => PetDetailsScreen(
+                      petInfo: data,
+                      petId: doc.id,
+                      onDeleted: _removerMarcador,
+                    ),
+                  ),
                 );
               },
             ),
           ),
         );
+
+        _petsInfo[doc.id] = data;
       }
 
       setState(() {
@@ -98,6 +105,13 @@ class _MapScreenState extends State<MapScreen> {
     } catch (e) {
       debugPrint("Erro ao carregar pets do Firestore: $e");
     }
+  }
+
+  void _removerMarcador(String petId) {
+    setState(() {
+      _marcadores.removeWhere((m) => m.markerId.value == petId);
+      _petsInfo.remove(petId);
+    });
   }
 
   void _aoCriarMapa(GoogleMapController controller) {
@@ -157,21 +171,17 @@ class _MapScreenState extends State<MapScreen> {
     );
 
     if (adicionar == true) {
-
       final resultado = await Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => AddPetScreen(local: posicao)),
       );
 
-
       if (resultado == null) return;
-
 
       final String id = resultado["id"];
       final Map<String, dynamic> data = resultado["data"];
 
       _petsInfo[id] = data;
-
 
       setState(() {
         _marcadores.add(
@@ -185,7 +195,11 @@ class _MapScreenState extends State<MapScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => PetDetailsScreen(petInfo: data),
+                    builder: (_) => PetDetailsScreen(
+                      petInfo: data,
+                      petId: id,
+                      onDeleted: _removerMarcador,
+                    ),
                   ),
                 );
               },
@@ -195,7 +209,6 @@ class _MapScreenState extends State<MapScreen> {
       });
     }
   }
-
 
   Widget _buildMapScreen() {
     return _localizacaoAtual == null
