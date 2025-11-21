@@ -47,7 +47,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 child: const Text(
-                  "Logout",
+                  "Sair",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
