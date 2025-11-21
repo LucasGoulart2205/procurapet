@@ -37,7 +37,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
       await cred.user!.updateDisplayName(nameController.text.trim());
 
-      await cred.user!.reload();
+      await FirebaseAuth.instance.currentUser?.reload();
 
       Navigator.pushReplacement(
         context,

@@ -38,6 +38,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           .add({
         'texto': texto,
         'userId': user?.uid,
+        'userName': user?.displayName,
         'criadoEm': FieldValue.serverTimestamp(),
       });
 
@@ -55,7 +56,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-
       appBar: AppBar(
         title: Text(
           widget.petInfo['nome'] ?? "Detalhes do Pet",
@@ -64,7 +64,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         backgroundColor: Colors.white,
         elevation: 2,
         iconTheme: const IconThemeData(color: Colors.black87),
-
         actions: [
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.red),
@@ -76,7 +75,9 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   content: const Text("Tem certeza que deseja excluir este pet?"),
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
-                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Excluir", style: TextStyle(color: Colors.red))),
+                    TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text("Excluir", style: TextStyle(color: Colors.red))),
                   ],
                 ),
               );
@@ -90,7 +91,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           )
         ],
       ),
-
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -100,10 +100,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           const SizedBox(height: 25),
           _titulo("Comentários"),
           const SizedBox(height: 10),
-
           _campoAdicionarComentario(),
           const SizedBox(height: 10),
-
           _listaComentarios(),
         ],
       ),
@@ -165,7 +163,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               ),
             ),
           ),
-
           _enviando
               ? const Padding(
             padding: EdgeInsets.all(8),
@@ -190,7 +187,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
             .collection('comentarios')
             .orderBy('criadoEm', descending: true)
             .snapshots(),
-
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Padding(
@@ -210,15 +206,35 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
             children: snapshot.data!.docs.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
 
+              // FORMATAR DATA AQUI
+              String dataFormatada = "Enviando...";
+              if (data['criadoEm'] != null) {
+                final date = (data['criadoEm'] as Timestamp).toDate();
+                dataFormatada =
+                "${date.day.toString().padLeft(2, '0')}/"
+                    "${date.month.toString().padLeft(2, '0')}/"
+                    "${date.year} "
+                    "${date.hour.toString().padLeft(2, '0')}:"
+                    "${date.minute.toString().padLeft(2, '0')}";
+              }
+
               return ListTile(
-                title: Text(data['texto'] ?? ''),
-                subtitle: Text(
-                  data['criadoEm'] == null
-                      ? "Enviando..."
-                      : (data['criadoEm'] as Timestamp).toDate().toString(),
-                  style: const TextStyle(fontSize: 12),
-                ),
                 leading: const Icon(Icons.person, color: Colors.teal),
+                title: Text(
+                  data['userName'] ?? "Usuário",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(data['texto'] ?? ''),
+                    const SizedBox(height: 4),
+                    Text(
+                      dataFormatada,
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                  ],
+                ),
               );
             }).toList(),
           );
