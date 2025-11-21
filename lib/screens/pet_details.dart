@@ -115,6 +115,17 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.petInfo['imagemUrl'] != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                widget.petInfo['imagemUrl'],
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+          if (widget.petInfo['imagemUrl'] != null) const SizedBox(height: 12),
           _titulo("Informações Gerais"),
           const SizedBox(height: 8),
           _info("Espécie", widget.petInfo['especie']),
@@ -206,7 +217,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
             children: snapshot.data!.docs.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
 
-              // FORMATAR DATA AQUI
               String dataFormatada = "Enviando...";
               if (data['criadoEm'] != null) {
                 final date = (data['criadoEm'] as Timestamp).toDate();

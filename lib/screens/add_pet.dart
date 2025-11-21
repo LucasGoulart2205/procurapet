@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class AddPetScreen extends StatefulWidget {
   final LatLng local;
@@ -37,6 +40,18 @@ class _AddPetScreenState extends State<AddPetScreen> {
 
   bool _carregando = false;
 
+  File? _imagemSelecionada;
+
+  Future<void> _selecionarImagem() async {
+    final picker = ImagePicker();
+    final XFile? imagem = await picker.pickImage(source: ImageSource.gallery);
+    if (imagem != null) {
+      setState(() {
+        _imagemSelecionada = File(imagem.path);
+      });
+    }
+  }
+
   Future<void> _adicionarPet() async {
     if (_nomeController.text.isEmpty || _especieSelecionada == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -50,6 +65,16 @@ class _AddPetScreenState extends State<AddPetScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception("Usuário não autenticado.");
+
+      String? urlImagem;
+      if (_imagemSelecionada != null) {
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('pets')
+            .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await ref.putFile(_imagemSelecionada!);
+        urlImagem = await ref.getDownloadURL();
+      }
 
       final doc = await FirebaseFirestore.instance.collection('pets').add({
         'nome': _nomeController.text,
@@ -65,6 +90,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
         'longitude': widget.local.longitude,
         'userId': user.uid,
         'criadoEm': FieldValue.serverTimestamp(),
+        'imagemUrl': urlImagem,
       });
 
       Navigator.pop(context, {
@@ -81,6 +107,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
           'descricao': _descricaoController.text,
           'latitude': widget.local.latitude,
           'longitude': widget.local.longitude,
+          'imagemUrl': urlImagem,
         }
       });
 
@@ -117,6 +144,21 @@ class _AddPetScreenState extends State<AddPetScreen> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
+                GestureDetector(
+                  onTap: _selecionarImagem,
+                  child: Container(
+                    height: 150,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: _imagemSelecionada != null
+                        ? Image.file(_imagemSelecionada!, fit: BoxFit.cover)
+                        : const Center(child: Text('Toque para escolher uma foto')),
+                  ),
+                ),
+                const SizedBox(height: 14),
                 _campoTexto(_nomeController, 'Nome do Pet'),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
@@ -151,7 +193,6 @@ class _AddPetScreenState extends State<AddPetScreen> {
                   onChanged: (v) => setState(() => _porteSelecionado = v),
                 ),
                 const SizedBox(height: 14),
-
                 _campoTexto(_corController, 'Cor'),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
@@ -186,7 +227,6 @@ class _AddPetScreenState extends State<AddPetScreen> {
               ],
             ),
           ),
-
           if (_carregando)
             Container(
               color: Colors.black38,
