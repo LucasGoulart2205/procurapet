@@ -1,14 +1,58 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'login.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
+class _ProfileScreenState extends State<ProfileScreen> {
+  final user = FirebaseAuth.instance.currentUser;
+  File? _image;
+  bool _loading = false;
+
+  final ImagePicker _picker = ImagePicker();
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (pickedFile != null) {
+      setState(() => _image = File(pickedFile.path));
+      await _uploadImage();
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_image == null || user == null) return;
+    setState(() => _loading = true);
+
+    try {
+      final ref = FirebaseStorage.instance.ref().child('user_profiles/${user!.uid}.jpg');
+      await ref.putFile(_image!);
+      final url = await ref.getDownloadURL();
+
+      await user!.updatePhotoURL(url);
+      await user!.reload();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto de perfil atualizada com sucesso!')),
+      );
+      setState(() {});
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao enviar foto: $e')),
+      );
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Perfil"),
@@ -17,9 +61,39 @@ class ProfileScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Center(
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundImage: _image != null
+                        ? FileImage(_image!)
+                        : (user?.photoURL != null
+                        ? NetworkImage(user!.photoURL!)
+                        : const AssetImage('assets/avatar_placeholder.png') as ImageProvider),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: InkWell(
+                      onTap: _pickImage,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.teal,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        padding: const EdgeInsets.all(8),
+                        child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
               "Nome: ${user?.displayName ?? "Usuário"}",
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -51,7 +125,12 @@ class ProfileScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
-            )
+            ),
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.only(top: 16),
+                child: Center(child: CircularProgressIndicator()),
+              ),
           ],
         ),
       ),
