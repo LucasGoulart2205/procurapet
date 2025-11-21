@@ -1,10 +1,13 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 import 'add_pet.dart';
 import 'pet_details.dart';
 import 'profile.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'chat_ia.dart';
 
 class MapScreen extends StatefulWidget {
@@ -64,6 +67,46 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  Future<Uint8List> _getBytesFromUrl(String url, {int width = 100}) async {
+    final response = await http.get(Uri.parse(url));
+    final bytes = response.bodyBytes;
+    final codec = await ui.instantiateImageCodec(bytes, targetWidth: width);
+    final frame = await codec.getNextFrame();
+    final data = await frame.image.toByteData(format: ui.ImageByteFormat.png);
+    return data!.buffer.asUint8List();
+  }
+
+  Future<BitmapDescriptor> _createMarkerFromImage(String url, {int size = 150}) async {
+    final Uint8List imageBytes = await _getBytesFromUrl(url, width: size);
+    final ui.Codec codec = await ui.instantiateImageCodec(imageBytes, targetWidth: size);
+    final ui.FrameInfo frame = await codec.getNextFrame();
+    final ui.Image image = frame.image;
+
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(recorder);
+
+    final Paint paint = Paint()..isAntiAlias = true;
+    final double radius = size / 2;
+    final double borderWidth = 6.0;
+
+    canvas.drawCircle(
+      Offset(radius, radius),
+      radius,
+      Paint()..color = Colors.white,
+    );
+
+    final Path clipPath = Path()..addOval(Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()));
+    canvas.clipPath(clipPath);
+
+    canvas.drawImage(image, Offset(0, 0), paint);
+
+    final ui.Image finalImage = await recorder
+        .endRecording()
+        .toImage(size, size);
+    final ByteData? byteData = await finalImage.toByteData(format: ui.ImageByteFormat.png);
+    return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
+  }
+
   Future<void> _carregarPetsDoFirestore() async {
     try {
       final snapshot = await FirebaseFirestore.instance.collection('pets').get();
@@ -73,10 +116,16 @@ class _MapScreenState extends State<MapScreen> {
         final data = doc.data();
         final LatLng pos = LatLng(data['latitude'], data['longitude']);
 
+        BitmapDescriptor icon = BitmapDescriptor.defaultMarker;
+        if (data['imagemUrl'] != null) {
+          icon = await _createMarkerFromImage(data['imagemUrl'], size: 120);
+        }
+
         novosMarcadores.add(
           Marker(
             markerId: MarkerId(doc.id),
             position: pos,
+            icon: icon,
             infoWindow: InfoWindow(
               title: data['nome'] ?? 'Pet',
               snippet: data['especie'] ?? '',
@@ -183,11 +232,17 @@ class _MapScreenState extends State<MapScreen> {
 
       _petsInfo[id] = data;
 
+      BitmapDescriptor icon = BitmapDescriptor.defaultMarker;
+      if (data['imagemUrl'] != null) {
+        icon = await _createMarkerFromImage(data['imagemUrl'], size: 120);
+      }
+
       setState(() {
         _marcadores.add(
           Marker(
             markerId: MarkerId(id),
             position: LatLng(data['latitude'], data['longitude']),
+            icon: icon,
             infoWindow: InfoWindow(
               title: data['nome'],
               snippet: "${data['especie']} - ${data['porte']}",

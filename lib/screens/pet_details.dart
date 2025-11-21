@@ -22,6 +22,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   final TextEditingController _comentarioController = TextEditingController();
   bool _enviando = false;
 
+  // Enviar comentário salvando userId, userName e photoURL
   Future<void> _enviarComentario() async {
     final texto = _comentarioController.text.trim();
     if (texto.isEmpty) return;
@@ -39,6 +40,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         'texto': texto,
         'userId': user?.uid,
         'userName': user?.displayName,
+        'userPhoto': user?.photoURL, // salva a foto do usuário
         'criadoEm': FieldValue.serverTimestamp(),
       });
 
@@ -126,7 +128,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               ),
             ),
           if (widget.petInfo['imagemUrl'] != null) const SizedBox(height: 12),
-          _titulo("Informações Gerais"),
+          _titulo("Informações do pet"),
           const SizedBox(height: 8),
           _info("Espécie", widget.petInfo['especie']),
           _info("Raça", widget.petInfo['raca']),
@@ -229,7 +231,11 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               }
 
               return ListTile(
-                leading: const Icon(Icons.person, color: Colors.teal),
+                leading: CircleAvatar(
+                  backgroundImage: data['userPhoto'] != null
+                      ? NetworkImage(data['userPhoto'])
+                      : const AssetImage('assets/avatar_placeholder.png') as ImageProvider,
+                ),
                 title: Text(
                   data['userName'] ?? "Usuário",
                   style: const TextStyle(fontWeight: FontWeight.bold),
