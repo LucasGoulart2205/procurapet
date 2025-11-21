@@ -9,6 +9,7 @@ import 'add_pet.dart';
 import 'pet_details.dart';
 import 'profile.dart';
 import 'chat_ia.dart';
+import 'pets_list.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -287,8 +288,10 @@ class _MapScreenState extends State<MapScreen> {
       case 0:
         return _buildMapScreen();
       case 1:
-        return const ChatIaScreen();
+        return const PetsListScreen();
       case 2:
+        return const ChatIaScreen();
+      case 3:
         return const ProfileScreen();
       default:
         return _buildMapScreen();
@@ -310,6 +313,7 @@ class _MapScreenState extends State<MapScreen> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.map), label: "Mapa"),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: "Pets"),
           BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: "Chat IA"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
         ],

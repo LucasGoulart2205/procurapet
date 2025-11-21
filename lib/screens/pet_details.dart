@@ -22,7 +22,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   final TextEditingController _comentarioController = TextEditingController();
   bool _enviando = false;
 
-  // Enviar comentário salvando userId, userName e photoURL
   Future<void> _enviarComentario() async {
     final texto = _comentarioController.text.trim();
     if (texto.isEmpty) return;
@@ -40,7 +39,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         'texto': texto,
         'userId': user?.uid,
         'userName': user?.displayName,
-        'userPhoto': user?.photoURL, // salva a foto do usuário
+        'userPhoto': user?.photoURL,
         'criadoEm': FieldValue.serverTimestamp(),
       });
 
