@@ -30,14 +30,20 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => isLoading = true);
 
     try {
-      await _auth.createUserWithEmailAndPassword(
+      UserCredential cred = await _auth.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
+
+      await cred.user!.updateDisplayName(nameController.text.trim());
+
+      await cred.user!.reload();
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MapScreen()),
       );
+
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message ?? "Erro ao cadastrar")),
@@ -46,6 +52,7 @@ class _SignupScreenState extends State<SignupScreen> {
       setState(() => isLoading = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
