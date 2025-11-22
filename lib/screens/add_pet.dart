@@ -88,7 +88,12 @@ class _AddPetScreenState extends State<AddPetScreen> {
         'descricao': _descricaoController.text,
         'latitude': widget.local.latitude,
         'longitude': widget.local.longitude,
+
+        // 🔥🔥🔥 ADICIONADO AQUI 🔥🔥🔥
         'userId': user.uid,
+        'userName': user.displayName,
+        'userPhoto': user.photoURL,
+
         'criadoEm': FieldValue.serverTimestamp(),
         'imagemUrl': urlImagem,
       });
@@ -164,8 +169,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
                 DropdownButtonFormField<String>(
                   decoration: InputDecoration(
                     labelText: 'Espécie',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   value: _especieSelecionada,
                   items: _especies
@@ -183,8 +187,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
                 DropdownButtonFormField<String>(
                   decoration: InputDecoration(
                     labelText: 'Porte',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   value: _porteSelecionado,
                   items: _portes
@@ -198,8 +201,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
                 DropdownButtonFormField<String>(
                   decoration: InputDecoration(
                     labelText: 'Sexo',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   value: _sexoSelecionado,
                   items: _sexos
@@ -214,8 +216,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
                   onPressed: _adicionarPet,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.teal,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 80, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),

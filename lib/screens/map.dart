@@ -88,7 +88,6 @@ class _MapScreenState extends State<MapScreen> {
 
     final Paint paint = Paint()..isAntiAlias = true;
     final double radius = size / 2;
-    final double borderWidth = 6.0;
 
     canvas.drawCircle(
       Offset(radius, radius),
@@ -101,9 +100,7 @@ class _MapScreenState extends State<MapScreen> {
 
     canvas.drawImage(image, Offset(0, 0), paint);
 
-    final ui.Image finalImage = await recorder
-        .endRecording()
-        .toImage(size, size);
+    final ui.Image finalImage = await recorder.endRecording().toImage(size, size);
     final ByteData? byteData = await finalImage.toByteData(format: ui.ImageByteFormat.png);
     return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
   }
@@ -179,13 +176,8 @@ class _MapScreenState extends State<MapScreen> {
       barrierDismissible: false,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
         child: Container(
           padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -229,7 +221,13 @@ class _MapScreenState extends State<MapScreen> {
       if (resultado == null) return;
 
       final String id = resultado["id"];
-      final Map<String, dynamic> data = resultado["data"];
+      
+      final doc = await FirebaseFirestore.instance
+          .collection('pets')
+          .doc(id)
+          .get();
+
+      final Map<String, dynamic> data = doc.data()!;
 
       _petsInfo[id] = data;
 

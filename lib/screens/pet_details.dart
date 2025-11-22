@@ -38,7 +38,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           .add({
         'texto': texto,
         'userId': user?.uid,
-        'userName': user?.displayName,
+        'userName': user?.displayName ?? "Usuário",
         'userPhoto': user?.photoURL,
         'criadoEm': FieldValue.serverTimestamp(),
       });
@@ -77,8 +77,9 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
                     TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text("Excluir", style: TextStyle(color: Colors.red))),
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text("Excluir", style: TextStyle(color: Colors.red)),
+                    ),
                   ],
                 ),
               );
@@ -97,6 +98,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         children: [
           _cardInformacoes(),
           const SizedBox(height: 20),
+          _cardUsuario(),
+          const SizedBox(height: 20),
           _cardDescricao(),
           const SizedBox(height: 25),
           _titulo("Comentários"),
@@ -108,7 +111,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       ),
     );
   }
-
   Widget _cardInformacoes() {
     return Container(
       decoration: _dec(),
@@ -136,6 +138,40 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           _info("Porte", widget.petInfo['porte']),
           _info("Cor", widget.petInfo['cor']),
           _info("Sexo", widget.petInfo['sexo']),
+        ],
+      ),
+    );
+  }
+
+  Widget _cardUsuario() {
+    final foto = widget.petInfo['userPhoto'];
+    final nome = widget.petInfo['userName'];
+
+    return Container(
+      decoration: _dec(),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundImage: foto != null
+                ? NetworkImage(foto)
+                : const AssetImage('assets/avatar_placeholder.png') as ImageProvider,
+          ),
+          const SizedBox(width: 15),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Publicado por:",
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+              ),
+              Text(
+                nome ?? "Usuário",
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -176,9 +212,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
             ),
           ),
           _enviando
-              ? const Padding(
-            padding: EdgeInsets.all(8),
-            child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
           )
               : IconButton(
             icon: const Icon(Icons.send, color: Colors.teal),
@@ -224,8 +261,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                 dataFormatada =
                 "${date.day.toString().padLeft(2, '0')}/"
                     "${date.month.toString().padLeft(2, '0')}/"
-                    "${date.year} "
-                    "${date.hour.toString().padLeft(2, '0')}:"
+                    "${date.year} ${date.hour.toString().padLeft(2, '0')}:"
                     "${date.minute.toString().padLeft(2, '0')}";
               }
 
