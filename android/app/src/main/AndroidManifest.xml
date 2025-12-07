@@ -7,13 +7,12 @@
 
     <application
         android:label="ProcuraPet"
-        android:name="${applicationName}"
         android:icon="@mipmap/procurapet">
 
         <!-- 🔹 Chave da API do Google Maps -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" />
+            android:value="AIzaSyBDzip4ffXSPyImDYOUuxkEd4uZE5dTR0E" />
 
         <activity
             android:name=".MainActivity"

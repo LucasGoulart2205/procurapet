@@ -89,7 +89,6 @@ class _AddPetScreenState extends State<AddPetScreen> {
         'latitude': widget.local.latitude,
         'longitude': widget.local.longitude,
 
-        // 🔥🔥🔥 ADICIONADO AQUI 🔥🔥🔥
         'userId': user.uid,
         'userName': user.displayName,
         'userPhoto': user.photoURL,

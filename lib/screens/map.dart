@@ -5,11 +5,16 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
+
+// Telas do app
 import 'add_pet.dart';
 import 'pet_details.dart';
 import 'profile.dart';
 import 'chat_ia.dart';
 import 'pets_list.dart';
+// Import com alias para evitar conflito
+import 'AddAdocaoScreen.dart' as addAdocao;
+import 'event_details_screen.dart' as eventDetails;
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -30,8 +35,10 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
     _obterLocalizacaoAtual();
     _carregarPetsDoFirestore();
+    _carregarEventosDeAdocao();
   }
 
+  // ================= Localização =================
   Future<void> _obterLocalizacaoAtual() async {
     bool servicosAtivos = await Geolocator.isLocationServiceEnabled();
     if (!servicosAtivos) {
@@ -68,6 +75,7 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  // ================= Marcadores Customizados =================
   Future<Uint8List> _getBytesFromUrl(String url, {int width = 100}) async {
     final response = await http.get(Uri.parse(url));
     final bytes = response.bodyBytes;
@@ -77,34 +85,44 @@ class _MapScreenState extends State<MapScreen> {
     return data!.buffer.asUint8List();
   }
 
-  Future<BitmapDescriptor> _createMarkerFromImage(String url, {int size = 150}) async {
+  Future<BitmapDescriptor> _createMarkerFromImage(String url,
+      {int size = 150, Color borderColor = Colors.teal, double borderWidth = 5}) async {
     final Uint8List imageBytes = await _getBytesFromUrl(url, width: size);
-    final ui.Codec codec = await ui.instantiateImageCodec(imageBytes, targetWidth: size);
+    final ui.Codec codec = await ui.instantiateImageCodec(imageBytes, targetWidth: size, targetHeight: size);
     final ui.FrameInfo frame = await codec.getNextFrame();
     final ui.Image image = frame.image;
 
     final ui.PictureRecorder recorder = ui.PictureRecorder();
     final Canvas canvas = Canvas(recorder);
-
     final Paint paint = Paint()..isAntiAlias = true;
     final double radius = size / 2;
 
-    canvas.drawCircle(
-      Offset(radius, radius),
-      radius,
-      Paint()..color = Colors.white,
-    );
+    if (borderWidth > 0) {
+      final Paint borderPaint = Paint()
+        ..color = borderColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = borderWidth
+        ..isAntiAlias = true;
 
-    final Path clipPath = Path()..addOval(Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()));
+      canvas.drawCircle(Offset(radius, radius), radius - borderWidth / 2, borderPaint);
+    }
+
+    final Path clipPath = Path()..addOval(Rect.fromLTWH(borderWidth, borderWidth, size - 2 * borderWidth, size - 2 * borderWidth));
     canvas.clipPath(clipPath);
 
-    canvas.drawImage(image, Offset(0, 0), paint);
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+      Rect.fromLTWH(borderWidth, borderWidth, size - 2 * borderWidth, size - 2 * borderWidth),
+      paint,
+    );
 
     final ui.Image finalImage = await recorder.endRecording().toImage(size, size);
     final ByteData? byteData = await finalImage.toByteData(format: ui.ImageByteFormat.png);
     return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
   }
 
+  // ================= Carregar Pets =================
   Future<void> _carregarPetsDoFirestore() async {
     try {
       final snapshot = await FirebaseFirestore.instance.collection('pets').get();
@@ -154,6 +172,58 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  // ================= Carregar Eventos =================
+  Future<void> _carregarEventosDeAdocao() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance.collection('adocoes').get();
+      final Set<Marker> eventosMarcadores = {};
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final LatLng pos = LatLng(data['latitude'], data['longitude']);
+
+        BitmapDescriptor icon = BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueViolet,
+        );
+
+        if (data['imagemUrl'] != null) {
+          icon = await _createMarkerFromImage(data['imagemUrl'], size: 130);
+        }
+
+        eventosMarcadores.add(
+          Marker(
+            markerId: MarkerId("evento_${doc.id}"),
+            position: pos,
+            icon: icon,
+            infoWindow: InfoWindow(
+              title: data['nome'] ?? "Evento de Adoção",
+              snippet: data['local'] ?? "",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => eventDetails.EventDetailsScreen(
+                      evento: {
+                        ...data,
+                        'id': doc.id,
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
+
+      setState(() {
+        _marcadores.addAll(eventosMarcadores);
+      });
+    } catch (e) {
+      print("Erro ao carregar eventos: $e");
+    }
+  }
+
   void _removerMarcador(String petId) {
     setState(() {
       _marcadores.removeWhere((m) => m.markerId.value == petId);
@@ -170,8 +240,9 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  // ================= Clique no mapa =================
   void _aoClicarNoMapa(LatLng posicao) async {
-    final adicionar = await showDialog<bool>(
+    final opcao = await showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (context) => Dialog(
@@ -181,28 +252,34 @@ class _MapScreenState extends State<MapScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.pets_rounded, size: 48),
+              const Icon(Icons.add_location_alt_rounded, size: 48, color: Colors.teal),
               const SizedBox(height: 16),
               const Text(
-                'Adicionar pet perdido?',
+                'O que deseja adicionar?',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               const Text(
-                'Deseja adicionar um pet perdido neste local?',
+                'Escolha uma opção para adicionar neste local.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 26),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              Wrap(
+                spacing: 8, // espaço horizontal entre os botões
+                runSpacing: 8, // espaço vertical se quebrar
+                alignment: WrapAlignment.center,
                 children: [
                   OutlinedButton(
-                    onPressed: () => Navigator.pop(context, false),
+                    onPressed: () => Navigator.pop(context, "cancelar"),
                     child: const Text('Cancelar'),
                   ),
                   ElevatedButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Adicionar'),
+                    onPressed: () => Navigator.pop(context, "evento"),
+                    child: const Text('Evento'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context, "pet"),
+                    child: const Text('Pet perdido'),
                   ),
                 ],
               ),
@@ -212,7 +289,9 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
 
-    if (adicionar == true) {
+    if (opcao == null || opcao == "cancelar") return;
+
+    if (opcao == "pet") {
       final resultado = await Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => AddPetScreen(local: posicao)),
@@ -221,12 +300,7 @@ class _MapScreenState extends State<MapScreen> {
       if (resultado == null) return;
 
       final String id = resultado["id"];
-      
-      final doc = await FirebaseFirestore.instance
-          .collection('pets')
-          .doc(id)
-          .get();
-
+      final doc = await FirebaseFirestore.instance.collection('pets').doc(id).get();
       final Map<String, dynamic> data = doc.data()!;
 
       _petsInfo[id] = data;
@@ -262,8 +336,48 @@ class _MapScreenState extends State<MapScreen> {
         );
       });
     }
+
+    if (opcao == "evento") {
+      final resultado = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => addAdocao.AddAdocaoScreen(local: posicao)),
+      );
+
+      if (resultado != null) {
+        final id = resultado["id"];
+        final data = resultado["data"];
+
+        BitmapDescriptor icon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet);
+        if (data['imagemUrl'] != null) {
+          icon = await _createMarkerFromImage(data['imagemUrl'], size: 130);
+        }
+
+        setState(() {
+          _marcadores.add(
+            Marker(
+              markerId: MarkerId("evento_$id"),
+              position: LatLng(data['latitude'], data['longitude']),
+              icon: icon,
+              infoWindow: InfoWindow(
+                title: data['nome'],
+                snippet: data['local'],
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => eventDetails.EventDetailsScreen(evento: data),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        });
+      }
+    }
   }
 
+  // ================= Build Map =================
   Widget _buildMapScreen() {
     return _localizacaoAtual == null
         ? const Center(child: CircularProgressIndicator())
@@ -312,7 +426,7 @@ class _MapScreenState extends State<MapScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.map), label: "Mapa"),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: "Pets"),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: "Chat IA"),
+          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: "Chat"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
         ],
       ),

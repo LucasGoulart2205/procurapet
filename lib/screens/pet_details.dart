@@ -66,31 +66,35 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         elevation: 2,
         iconTheme: const IconThemeData(color: Colors.black87),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () async {
-              final confirmar = await showDialog<bool>(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: const Text("Excluir Pet"),
-                  content: const Text("Tem certeza que deseja excluir este pet?"),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text("Excluir", style: TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-              );
+          if (widget.petInfo['userId'] == FirebaseAuth.instance.currentUser?.uid)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () async {
+                final confirmar = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text("Excluir Pet"),
+                    content: const Text("Tem certeza que deseja excluir este pet?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text("Cancelar"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text("Excluir", style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
 
-              if (confirmar == true) {
-                await FirebaseFirestore.instance.collection('pets').doc(widget.petId).delete();
-                widget.onDeleted?.call(widget.petId);
-                Navigator.pop(context);
-              }
-            },
-          )
+                if (confirmar == true) {
+                  await FirebaseFirestore.instance.collection('pets').doc(widget.petId).delete();
+                  widget.onDeleted?.call(widget.petId);
+                  Navigator.pop(context);
+                }
+              },
+            )
         ],
       ),
       body: ListView(
